@@ -1,6 +1,6 @@
 <h1> Instructions for running satellite mask inspection tools </h1>
 
-<b>Disclaimer: All codes in this repo and under construction. Some (all?) are poorly documented, and probably not very efficient.</b>
+<b>Disclaimer: All codes in this repo and under construction. Some (all?) are poorly documented, probably not very efficient, and definitely not very pretty or following best practices.</b>
 
 <h2> List of files: </h2>
 
@@ -10,6 +10,15 @@
   * config.yaml -- configuration file for inspect_sat_masks.py
 
 <h2> Detailed Instructions </h2>
+
+The code is not packages up as a nice repo yet, so for now, just download everything into a directory and run the codes from there. Specifically:
+```bash
+git clone
+```
+
+Then run
+
+
 <h3> inspect_sat_masks.py </h3>
 This is the main code to inspect satellite trail masks. It only works if the file naming convention and directory structure is kept consistent, so do not move things around.
 To run this code, 
@@ -22,7 +31,7 @@ To run this code,
   * type:
     ```python
     inspect_sat_masks(path_to_satellite_trail_files)
-
+    
 This program finds all files in a directory and displays diagnostic plots for individual trails, followed by diagnostic plots for the whole image (showing all identified trails at once). By default, only the "robust" trails are shown, although this can be modified.
 
 Options will change depending on whether you're looking at an individual trail or the final overview of the image. 
@@ -47,3 +56,12 @@ When looking at the overall image, these are the options:
 * [i] Jump to another image. See above for description.
 * [t] Toggle only show "good" trails. See above for description.
 * [Q] Quit
+
+<h3> update_diagnostics.py</h3>
+
+This program updates all diagnostic plots in a directory to be consistent with the most recent format. To run it, just open python and type:
+```python
+from update_diagnostics import update_diagnostics
+update_diagnostics(path_to_satellite_files)
+
+

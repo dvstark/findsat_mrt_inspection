@@ -13,11 +13,18 @@
 
 The code is not packages up as a nice repo yet, so for now, just download everything into a directory and run the codes from there. Specifically:
 ```bash
-git clone
+git clone git@github.com:dvstark/findsat_mrt_inspection.git
 ```
+The codes to be run take directories as input, so it's ok that they are in their own space.
 
-Then run
+<h3> update_diagnostics.py</h3>
 
+This program updates all diagnostic plots in a directory to be consistent with the most recent format. This needs to be run before running ```inspect_sat_masks.py```. To run it, just open python and type:
+```python
+from update_diagnostics import update_diagnostics
+update_diagnostics(path_to_satellite_files)
+```
+where ```path_to_satellite_trail_files``` is the path where all the findsat_mrt output is saved.
 
 <h3> inspect_sat_masks.py </h3>
 This is the main code to inspect satellite trail masks. It only works if the file naming convention and directory structure is kept consistent, so do not move things around.
@@ -31,6 +38,8 @@ To run this code,
   * type:
     ```python
     inspect_sat_masks(path_to_satellite_trail_files)
+    ```
+    where ```path_to_satellite_trail_files``` is the path where all the findsat_mrt output is saved.
     
 This program finds all files in a directory and displays diagnostic plots for individual trails, followed by diagnostic plots for the whole image (showing all identified trails at once). By default, only the "robust" trails are shown, although this can be modified.
 
@@ -57,11 +66,6 @@ When looking at the overall image, these are the options:
 * [t] Toggle only show "good" trails. See above for description.
 * [Q] Quit
 
-<h3> update_diagnostics.py</h3>
 
-This program updates all diagnostic plots in a directory to be consistent with the most recent format. To run it, just open python and type:
-```python
-from update_diagnostics import update_diagnostics
-update_diagnostics(path_to_satellite_files)
 
 

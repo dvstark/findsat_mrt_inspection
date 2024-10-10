@@ -25,8 +25,8 @@ def make_trail_diagnostic(image_arr,
 
     if output_file is not None:
         if Path(output_file).exists() & (overwrite == False):
-            print('Output file {} already exists.'.format(output_file)
-                  '\nSet overwrite = True to replace it.')
+            print('Output file {} already exists.'.format(output_file))
+            print('Set overwrite = True to replace it.')
             plt.close('all')
             return
 
@@ -119,8 +119,8 @@ def make_image_diagnostic(image_arr,
     
     if output_file is not None:
         if Path(output_file).exists() & (overwrite == False):
-            print('Output file {} already exists.'.format(output_file)
-                  '\nSet overwrite = True to replace it.')
+            print('Output file {} already exists.'.format(output_file))
+            print('Set overwrite = True to replace it.')
             plt.close('all')
             return
 
@@ -212,6 +212,11 @@ def make_image_diagnostic(image_arr,
                     #profile_file = '{}{}_ext{}_mrt_1dprof_{}.fits'.format(prof_dir, root, ext, row['id'])
                     profile_file = Path.joinpath(prof_dir,
                                                  '{}_ext{}_mrt_1dprof_{}.fits'.format(root, ext, row['id']))
+                    
+                    if ~profile_file.exists():
+                        print('Profile file missing. Skipping')
+                        continue
+
                     prof = fits.getdata(profile_file)
                     prof_hdr = fits.getheader(profile_file)
 

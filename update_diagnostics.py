@@ -38,7 +38,8 @@ def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True,
     image_list = glob.glob(image_dir + '*flc.fits')
 
     # set up log
-    logfile = cwd + 'update_diagnostics_log.txt'
+    logfile = cwd + '/update_diagnostics_log.txt'
+    print('Log file is {}'.format(logfile))
 
     logger = logging.getLogger(__name__)
     FileOutputHandler = logging.FileHandler(logfile)
@@ -53,7 +54,7 @@ def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True,
     #                    format="%(name)s → %(levelname)s: %(message)s",
     #                    filemode='w')
     now = datetime.datetime.now()
-    logging.info('Started update_diagnostics at ' + now.strftime("%m/%d/%Y, %H:%M:%S") + '\n')
+    logger.info('Started update_diagnostics at ' + now.strftime("%m/%d/%Y, %H:%M:%S") + '\n')
 
     # extract the roots
     roots = np.array([image.split('/')[-1].split('.fits')[0] for image in image_list])
@@ -82,7 +83,7 @@ def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True,
 
                     for e, f in zip(exist, file_list):
                         if ~e:
-                            logging.warning('Missing file: ' + f)
+                            logger.warning('Missing file: ' + f)
 
                     continue   
 

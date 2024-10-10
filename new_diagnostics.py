@@ -20,7 +20,15 @@ def make_trail_diagnostic(image_arr,
                           scale=[-1,3],
                           cmap='Greys', root='',
                           output_file = None, 
-                          min_mask_width=10):
+                          min_mask_width=10,
+                          overwrite=False):
+
+    if output_file is not None:
+        if Path(output_file).exists() & (overwrite == False):
+            print('Output file {} already exists.'.format(output_file)
+                  '\nSet overwrite = True to replace it.')
+            plt.close('all')
+            return
 
     # set up figure grid
     fig = plt.figure(figsize=(15,12), layout='constrained')
@@ -106,8 +114,16 @@ def make_image_diagnostic(image_arr,
                           scale=[-1,3],
                           cmap='Greys',
                           output_file = None, 
-                          min_mask_width=10):
+                          min_mask_width=10,
+                          overwrite=False):
     
+    if output_file is not None:
+        if Path(output_file).exists() & (overwrite == False):
+            print('Output file {} already exists.'.format(output_file)
+                  '\nSet overwrite = True to replace it.')
+            plt.close('all')
+            return
+
     # set up figure grid
     fig = plt.figure(figsize=(15,12), layout='constrained')
     fig.suptitle('Final Image Diagnostic\n' + root)
@@ -230,7 +246,7 @@ def make_image_diagnostic(image_arr,
 
     #plt.tight_layout()
     if output_file is not None:
-        plt.savefig(output_file, dpi=150)
+            plt.savefig(output_file, dpi=150)
 
     plt.close()
 

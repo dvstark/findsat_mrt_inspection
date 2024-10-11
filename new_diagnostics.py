@@ -101,7 +101,7 @@ def make_trail_diagnostic(image_arr,
     if output_file is not None:
         plt.savefig(output_file, dpi=150)
 
-    plt.close()
+    plt.close('all')
 
 
 def make_image_diagnostic(image_arr,
@@ -253,7 +253,7 @@ def make_image_diagnostic(image_arr,
     if output_file is not None:
             plt.savefig(output_file, dpi=150)
 
-    plt.close()
+    plt.close('all')
 
 if __name__ == '__main__':
 

@@ -13,9 +13,6 @@ from astropy.io import fits
 from astropy.nddata import block_reduce
 import acstools.utils_findsat_mrt as u
 
-plt.ion()
-
-
 def check_files_exist(files):
 
     exists = []
@@ -26,7 +23,7 @@ def check_files_exist(files):
     return exists    
 
 def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True, 
-                       remake_image_diagnostics = True):
+                       remake_image_diagnostics = True, overwrite=False):
 
 
 
@@ -96,6 +93,12 @@ def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True,
                     for row in catalog:
                         print('Updating trail diagnostic plots for {}, ext {}, trail id {}'.format(root, ext, row['id']))
 
+                        output_file = cwd + '/' + root + '_ext{}_mrt/{}_full_ext{}_mrt_{}_diagnostic.png'.format(ext, root, ext, row['id'])
+                        if Path(output_file).exists() & (overwrite == False):
+                            print('Output file {} already exists.'.format(output_file))
+                            print('Set overwrite=True to replace it')
+                            continue
+
                         # load image file and arrange. Have to rebin to match 
                         # findsat_mrt output
                         hdu = fits.open(image_path)
@@ -142,8 +145,6 @@ def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True,
                         profile = fits.getdata(profile_file)
                         profile_hdr = fits.getheader(profile_file)
 
-                        output_file = cwd + '/' + root + '_ext{}_mrt/{}_full_ext{}_mrt_{}_diagnostic.png'.format(ext, root, ext, row['id'])
-
                         make_trail_diagnostic(image_arr,mask_arr,trail_mask_arr,row,profile,profile_hdr, root=root, output_file = output_file)
 
 
@@ -174,6 +175,14 @@ def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True,
 
                 continue               
 
+            # also see if the diagnostic already exists
+            output_file = cwd + '/' + '{}_full_mrt_diagnostic.png'.format(root)
+
+            if Path(output_file).exists() & (overwrite == False):
+                print('Output file {} already exists.'.format(output_file))
+                print('Set overwrite=True to replace it')
+                continue
+
             # load the catalogs for each chip and combined
             catalog_4 = Table.read(catalog_path_4)
             catalog_1 = Table.read(catalog_path_1)
@@ -194,7 +203,6 @@ def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True,
 
             sat_dir = cwd
 
-            output_file = cwd + '/' + '{}_full_mrt_diagnostic.png'.format(root)
 
             make_image_diagnostic(image_arr,
                                 final_mask_arr,

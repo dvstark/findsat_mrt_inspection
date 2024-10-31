@@ -1,6 +1,6 @@
 <h1> Instructions for running satellite mask inspection tools </h1>
 
-<b>Disclaimer: All codes in this repo and under construction. Some (all?) are poorly documented, probably not very efficient, and definitely not very pretty or following best practices.</b>
+<b>Disclaimer: All codes in this repo and under construction. Some (all?) are poorly documented, probably not very efficient, and definitely not very pretty or following best practices. Right now, they only work if files are organized in the same way that the supercal directories are.</b>
 
 <h2> List of files: </h2>
 
@@ -9,25 +9,54 @@
   * update_diagnostics.py -- code to update image and trail diagnostic files to the newest format. Should be run prior to inspecting satellite trails masks
   * config.yaml -- configuration file for inspect_sat_masks.py
 
-<h2> Detailed Instructions </h2>
+<h2> Setup </h2>
 
-The code is not packages up as a nice repo yet, so for now, just download everything into a directory and run the codes from there. Specifically:
+<h3> Environment </h3>
+
+First you'll need to setup up the environment. We mostly use the standard ```stenv``` environment, but with a modified unreleased version of ```acstools```.
+
+First, download the stenv environment and follow the instructions <a href="https://stenv.readthedocs.io/en/latest/index.html">here</a>. You may want to name the environment something aside from "stenv", for example, let's assume you call it "stenv_findsat_mrt".
+
+Once the environment is set up, activate it
+```bash
+conda activate stenv_findsat_mrt
+```
+We are going to replace the standard version of ```acstools```, so let's first uninstall the version packaged with ```stenv```.
+```bash
+pip uninstall acstools
+```
+
+Next, run the following code to download a very specific branch of my personal acstools repo (this assumes you have git configured). 
+```bash
+git clone -b supercal_fix git@github.com:dvstark/acstools.git
+```
+And then install that repo
+```bash
+pip install [path to wherever you put the repo you just cloned]
+```
+
+
+<h3>Satellite mask inspection tools</h3>
+
+The code is not packaged up as a nice repo yet, so for now, just download everything into a directory and run the codes from there. Specifically:
 ```bash
 git clone git@github.com:dvstark/findsat_mrt_inspection.git
 ```
 The codes to be run take directories as input, so it's ok that they are in their own space.
 
-<h3> update_diagnostics.py</h3>
+<h2>Running the codes</h2>
 
-This program updates all diagnostic plots in a directory to be consistent with the most recent format. This needs to be run before running ```inspect_sat_masks.py```. To run it, just open python and type:
+<h3> Updating diagnostic plots </h3>
+
+The version of ```findsat_mrt``` in ```acstools```, even my updated version, does not create the most recent style of diagnostic plots. The code, ```update_diagnostics.py``` generates new diagnostic plots in the most recent style from existing output from ```findsat_mrt```. This needs to be run before running ```inspect_sat_masks.py```. To run it, just open python and type:
 ```python
 from update_diagnostics import update_diagnostics
 update_diagnostics(path_to_satellite_files)
 ```
 where ```path_to_satellite_trail_files``` is the path where all the findsat_mrt output is saved.
 
-<h3> inspect_sat_masks.py </h3>
-This is the main code to inspect satellite trail masks. It only works if the file naming convention and directory structure is kept consistent, so do not move things around.
+<h3> Inspecting the satellite masks </h3>
+The main code to inspect satellite trail masks is called ```inspect_sat_masks.py```. It only works if the file naming convention and directory structure is kept a certain way, so do not move things around.
 To run this code, 
 
   * Go to the directory where it is located

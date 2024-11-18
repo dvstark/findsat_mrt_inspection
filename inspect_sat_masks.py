@@ -57,7 +57,8 @@ def show_image_diagnostic(image_diagnostic, xsize=15, ysize=12):
 class inspect_sat_masks(WfcWrapper):
     def __init__(self, sat_dir,
                  image_dir=None,
-                 inspect_good_only=True):
+                 inspect_good_only=True,
+                 restart=False):
 
         # other related programs use the non-interactive "agg" backend. 
         # Make sure htat is not set still
@@ -95,6 +96,18 @@ class inspect_sat_masks(WfcWrapper):
         # set the current image and trail index to -1 to start
         self.image_index = -1
         self.trail_index = -1
+
+        # see if _left_off.txt exists. If so, pick up there, unless restart=True
+        left_off_file = Path.joinpath(self.sat_dir, '_left_off.txt')
+        if left_off_file.exists() and not restart:
+            lo = open(left_off_file,'r')
+            last_image = lo.readline()
+            lo.close()
+
+            sel = np.where(self.image_roots == last_image)[0]
+            print('Starting where you left off, on image ', self.image_roots[sel[0]])
+            if len(sel) > 0:
+                self.image_index = sel[0] - 1
         
         # set the image extenson to 4. We iterate 4 to 1 and back
         self.ext = 1
@@ -505,6 +518,25 @@ class inspect_sat_masks(WfcWrapper):
                 # backup the trail profile itself in case any header info is changed
                 shutil.copy(self.trail_profile_path, self.profile_fits_backup)
 
+    def previous_trail(self):
+        '''Routine to go back to the previous trail'''
+
+        # go back 2, step forward 1
+        if self.trail_index > 0:
+            self.trail_index = self.trail_index-2
+            self.next_trail()
+        else:
+            print('\n!!! No prior trails for this image!!!\n')
+
+    def previous_image(self):
+        if self.image_index > 0:
+            self.image_index = self.image_index - 2
+            self.next_image()
+        else:
+            print('\n!!! No prior images to look at. Select [j] to jump to any other image!!!\n')
+
+
+    
     def reexamine_trails(self):
 
         # roll the image index back 1, then run next_image
@@ -549,6 +581,11 @@ class inspect_sat_masks(WfcWrapper):
 
             # proceed to load everything
             self.current_image = self.image_roots[self.image_index]
+
+            # write this image name to a file
+            left_off_file = open(Path.joinpath(self.sat_dir, '_left_off.txt'),'w')
+            left_off_file.write(self.current_image)
+            left_off_file.close()
 
             # tell user what we're looking at
             print(f'Image : {self.current_image}')
@@ -689,7 +726,7 @@ class inspect_sat_masks(WfcWrapper):
         make_trail_diagnostic(image_arr,full_mask_arr,trail_mask_arr,
                               self.catalog[self.trail_index],self.prof,
                               self.prof_hdr, root=self.current_image,
-                              overwrite=True
+                              overwrite=True,
                               output_file='_current_updated_trail_diagnostic.png')
         
         make_image_diagnostic(image_arr,
@@ -800,25 +837,27 @@ class inspect_sat_masks(WfcWrapper):
 
     def menu(self):
 
-        trail_options = {'': {'desc':' [ENTER] Save and go to next trail', 'func':self.next_trail},
-                   'w': {'desc': '[w] Change trail width', 'func': self.change_width},
-                   'r': {'desc': '[r] Remove trail', 'func': self.remove_trail},
-                   'a': {'desc': '[a] Add trail', 'func': self.add_trail},
-                   'u': {'desc': '[u] Undo changes', 'func': self.undo_changes},
-                   'ds9': {'desc': '[ds9] Load image in ds9', 'func': self.load_in_ds9},
-                   'i': {'desc': '[i] Jump to another image (this does not save)', 'func': self.choose_image},
-                   't': {'desc': '[t] Toggle only show "good" trails (currently {})'.format(self.inspect_good_only),'func': self.toggle_show_all_trails},
-                   'Q': {'desc': '[Q] Quit', 'func': self.exit}
-        }
+        trail_options = {'s': {'desc':' [s] Save and go to next trail', 'func':self.next_trail},
+                         'bt': {'desc': '[bt] Go back to previous trail', 'func':self.previous_trail},
+                         'w': {'desc': '[w] Change trail width', 'func': self.change_width},
+                         'r': {'desc': '[r] Remove trail', 'func': self.remove_trail},
+                         'a': {'desc': '[a] Add trail', 'func': self.add_trail},
+                         'u': {'desc': '[u] Undo changes', 'func': self.undo_changes},
+                         'ds9': {'desc': '[ds9] Load image in ds9', 'func': self.load_in_ds9},
+                         'i': {'desc': '[i] Jump to another image (this does not save)', 'func': self.choose_image},
+                         't': {'desc': '[t] Toggle only show "good" trails (currently {})'.format(self.inspect_good_only),'func': self.toggle_show_all_trails},
+                         'Q': {'desc': '[Q] Quit', 'func': self.exit}
+                         }
 
-        image_options = {'': {'desc':'[ENTER] Save and go to next image', 'func':self.next_image},
-                   'n': {'desc': '[n] Add a completely new trail', 'func': self.add_new_trail},
-                   'r': {'desc': '[r] Re-examine trails', 'func': self.reexamine_trails},
-                   'ds9': {'desc': '[ds9] Load image in ds9', 'func': self.load_in_ds9},
-                   'i': {'desc': '[i] Jump to another image (this does not save)', 'func': self.choose_image},
-                   't': {'desc': '[t] Toggle only show "good" trails (currently {})'.format(self.inspect_good_only),'func': self.toggle_show_all_trails},
-                   'Q': {'desc': '[Q] Quit', 'func': self.exit}
-        }
+        image_options = {'s': {'desc':'[s] Save and go to next image', 'func':self.next_image},
+                         'bi': {'desc': '[bi] Go back to previous image', 'func': self.previous_image},
+                         'n': {'desc': '[n] Add a completely new trail', 'func': self.add_new_trail},
+                         'r': {'desc': '[r] Re-examine trails', 'func': self.reexamine_trails},
+                         'ds9': {'desc': '[ds9] Load image in ds9', 'func': self.load_in_ds9},
+                         'i': {'desc': '[i] Jump to another image (this does not save)', 'func': self.choose_image},
+                         't': {'desc': '[t] Toggle only show "good" trails (currently {})'.format(self.inspect_good_only),'func': self.toggle_show_all_trails},
+                         'Q': {'desc': '[Q] Quit', 'func': self.exit}
+                         }
 
         if self.menu_type == 'trail':
             options = trail_options

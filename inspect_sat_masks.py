@@ -686,6 +686,7 @@ class inspect_sat_masks(WfcWrapper):
         make_trail_diagnostic(image_arr,full_mask_arr,trail_mask_arr,
                               self.catalog[self.trail_index],self.prof,
                               self.prof_hdr, root=self.current_image,
+                              overwrite=True
                               output_file='_current_updated_trail_diagnostic.png')
         
         make_image_diagnostic(image_arr,
@@ -698,7 +699,8 @@ class inspect_sat_masks(WfcWrapper):
                             scale=[-1,3],
                             cmap='Greys',
                             output_file = self.updated_image_diagnostic, 
-                            min_mask_width=10)
+                            min_mask_width=10,
+                            overwrite=True)
         # make_trail_diagnostic(self.image, submask, self.mask, self.catalog[self.trail_index],
         #                       self.prof, self.prof_hdr, scale=[-1,3], cmap='Greys',
         #                       root=self.current_image, big_rebin=16, 

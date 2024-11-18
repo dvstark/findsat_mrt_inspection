@@ -87,6 +87,9 @@ class inspect_sat_masks(WfcWrapper):
         image_roots = []
         for file in list(Path.glob(self.image_dir, "*.fits")):
             image_roots.append(file.stem)
+        
+        # sort these so they are always in the same order. Then add to class
+        image_roots = np.sort(image_roots)
         self.image_roots = np.array(image_roots)
 
         # set the current image and trail index to -1 to start

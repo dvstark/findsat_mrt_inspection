@@ -834,6 +834,10 @@ class inspect_sat_masks(WfcWrapper):
 
         except:
             print('You must supply a number')
+            
+    def nothing(self):
+        ...
+
 
     def menu(self):
 
@@ -846,6 +850,7 @@ class inspect_sat_masks(WfcWrapper):
                          'ds9': {'desc': '[ds9] Load image in ds9', 'func': self.load_in_ds9},
                          'i': {'desc': '[i] Jump to another image (this does not save)', 'func': self.choose_image},
                          't': {'desc': '[t] Toggle only show "good" trails (currently {})'.format(self.inspect_good_only),'func': self.toggle_show_all_trails},
+                         'm': {'desc': '[m] Display menu','func':self.nothing},
                          'Q': {'desc': '[Q] Quit', 'func': self.exit}
                          }
 
@@ -856,6 +861,7 @@ class inspect_sat_masks(WfcWrapper):
                          'ds9': {'desc': '[ds9] Load image in ds9', 'func': self.load_in_ds9},
                          'i': {'desc': '[i] Jump to another image (this does not save)', 'func': self.choose_image},
                          't': {'desc': '[t] Toggle only show "good" trails (currently {})'.format(self.inspect_good_only),'func': self.toggle_show_all_trails},
+                         'm': {'desc': '[m] Display menu','func':self.nothing},
                          'Q': {'desc': '[Q] Quit', 'func': self.exit}
                          }
 

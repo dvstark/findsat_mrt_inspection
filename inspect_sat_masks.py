@@ -410,10 +410,10 @@ class inspect_sat_masks(WfcWrapper):
 
         # trail diagnostic plot
         if Path('./_current_updated_trail_diagnostic.png').is_file():
-            shutil.copy('./_current_updated_trail_diagnostic.png', self.trail_diagnostic_path)
+            shutil.copyfile('./_current_updated_trail_diagnostic.png', self.trail_diagnostic_path)
 
         # image diagnostic plot
-        shutil.copy(self.updated_image_diagnostic, self.image_diagnostic_path)
+        shutil.copyfile(self.updated_image_diagnostic, self.image_diagnostic_path)
 
         #1d profile data
         fits.writeto(self.trail_profile_path, self.prof, header=self.prof_hdr, overwrite=True)
@@ -510,13 +510,13 @@ class inspect_sat_masks(WfcWrapper):
                 self.load_trail_diagnostic()
 
                 # backup the trail diagnostic file in case we start editing
-                shutil.copy(self.trail_diagnostic_path, self.profile_diagnostic_backup)
+                shutil.copyfile(self.trail_diagnostic_path, self.profile_diagnostic_backup)
 
                 self.load_1d_prof()
 
 
                 # backup the trail profile itself in case any header info is changed
-                shutil.copy(self.trail_profile_path, self.profile_fits_backup)
+                shutil.copyfile(self.trail_profile_path, self.profile_fits_backup)
 
     def previous_trail(self):
         '''Routine to go back to the previous trail'''
@@ -596,7 +596,7 @@ class inspect_sat_masks(WfcWrapper):
 
             # copy the image diagnostic over to a temp file
             #self.image_diagnostic_path = Path.joinpath(self.sat_dir, self.current_image + '_full_mrt_diagnostic.png'.format(self.ext))
-            shutil.copy(self.image_diagnostic_path, self.updated_image_diagnostic)
+            shutil.copyfile(self.image_diagnostic_path, self.updated_image_diagnostic)
 
             # set the trails directory for ths image
             #self.trail_dir = self.image_roots[self.image_index] + f'_ext{self.ext}_mrt'
@@ -776,7 +776,7 @@ class inspect_sat_masks(WfcWrapper):
                 os.remove('_current_updated_trail_diagnostic.png')
 
             # replace the working image diagnostic plot
-            shutil.copy(self.image_diagnostic_path, 
+            shutil.copyfile(self.image_diagnostic_path, 
                         self.updated_image_diagnostic)
 
             # reload the catalog
@@ -794,7 +794,7 @@ class inspect_sat_masks(WfcWrapper):
 
             else:
                 self.ext = 1  # reset to index present when we inspect image
-                shutil.copy(self.image_diagnostic_path, self.updated_image_diagnostic)
+                shutil.copyfile(self.image_diagnostic_path, self.updated_image_diagnostic)
                 self.load_diagnostic()
 
 

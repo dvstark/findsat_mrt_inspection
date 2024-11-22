@@ -397,7 +397,10 @@ class inspect_sat_masks(WfcWrapper):
             # update profile
             self.prof_hdr['width'] = new_width
             
+            self.remake_masks()
+
         except:
+            
             print('This width must be a number')
 
     def save(self):

@@ -118,7 +118,7 @@ def make_image_diagnostic(image_arr,
                           overwrite=False):
     
     if output_file is not None:
-        if Path(output_file).exists() & (overwrite == False):
+        if Path(output_file).exists() & (not overwrite):
             print('Output file {} already exists.'.format(output_file))
             print('Set overwrite = True to replace it.')
             plt.close('all')
@@ -213,8 +213,8 @@ def make_image_diagnostic(image_arr,
                     profile_file = Path.joinpath(prof_dir,
                                                  '{}_ext{}_mrt_1dprof_{}.fits'.format(root, ext, row['id']))
                     
-                    if ~profile_file.exists():
-                        print('Profile file missing. Skipping')
+                    if not profile_file.exists():
+                        print('Profile file {} missing. Skipping'.format(str(profile_file)))
                         continue
 
                     prof = fits.getdata(profile_file)
@@ -229,7 +229,7 @@ def make_image_diagnostic(image_arr,
                         chip = 'wfc2'
                     label = '{} - {}'.format(row['id'], chip)
                     ax.plot(xarr, log_med, label=label)
-                    final_width = np.maximum(min_mask_width, prof_hdr['width'])
+                    final_width = np.maximum(min_mask_width, row['width'])
                     # indicate the iwdth
 
                     ax.axvline(-final_width/2, ls='--')

@@ -812,6 +812,7 @@ class inspect_sat_masks(WfcWrapper):
         # this now part of config file
         #ds9_command = '/Applications/SAOImageDS9.app/Contents/MacOS/ds9'
 
+        print('\n loading ds9 \n')
 
         if ext is None:
             os.system(ds9_command + ' -multiframe ' + str(self.image_path) + ' &')

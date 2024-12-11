@@ -10,6 +10,7 @@ from pathlib import Path
 import pdb
 import warnings
 import yaml
+import subprocess
 
 
 # 3rd party
@@ -815,9 +816,11 @@ class inspect_sat_masks(WfcWrapper):
         print('\n loading ds9 \n')
 
         if ext is None:
-            os.system(ds9_command + ' -multiframe ' + str(self.image_path) + ' &')
+            full_command = ds9_command + ' -multiframe ' + str(self.image_path)
         else:
-            os.system(ds9_command + ' ' + str(self.image_path) + '[{}] &'.format(ext))
+            full_command = ds9_command + ' ' + str(self.image_path) + '[{}]'.format(ext)
+
+        subprocess.Popen(full_command.split())
 
 
     def choose_image(self):

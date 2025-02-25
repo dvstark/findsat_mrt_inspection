@@ -31,6 +31,7 @@ from astropy.io import fits
 from acstools import utils_findsat_mrt as u
 
 from new_diagnostics import make_trail_diagnostic, make_image_diagnostic
+from update_diagnostics import update_diagnostics
 
 # load configuration entries
 with open("config.yaml") as stream:
@@ -126,6 +127,8 @@ class inspect_sat_masks(WfcWrapper):
         self.profile_diagnostic_backup = Path.joinpath(self.sat_dir, '_current_profile_backup.png')
         self.updated_image_diagnostic = Path.joinpath(self.sat_dir, '_current_updated_image_diagnostic.png')
 
+        # flag to indicate is a brand new trail is being displayed. Used later
+        self.showing_new_trail = False
 
         self.execute()
 
@@ -273,7 +276,8 @@ class inspect_sat_masks(WfcWrapper):
             self.specify_image_paths()
             self.load_images()
             self.load_catalog()
-
+            
+        print('Use ds9 display to determine trail properties')
         self.load_in_ds9(ext=self.ext)
 
         # get starting point
@@ -367,18 +371,20 @@ class inspect_sat_masks(WfcWrapper):
         hdu.header['ext'] = self.ext
         hdu.header['image'] = self.current_image
         self.prof_hdr = hdu.header
+
+        # have to write the trail profile file, otherwise the diagnostic plot cannot be updated
         hdu.writeto(self.trail_profile_path, overwrite=True)
 
         # regenerate masks
         self.remake_masks()
 
 
-    # create the new diagnostic plot for the trail and show
+        # create the new diagnostic plot for the trail and show
         self.regenerate_diagnostics()
 
         self.updates_made = True
+        self.showing_new_trail = True
         self.menu_type = 'trail'
-
 
     def change_width(self):
         sel = np.where(self.catalog['id'] == self.trail_id)[0]
@@ -479,13 +485,29 @@ class inspect_sat_masks(WfcWrapper):
             self.save()
             self.updates_made = False
 
-        print('\nMoving to the next trail')
-        plt.close('all')
+            # if moving on from a newly defined trail, need to
+            # regenerate plots for all trails to reflect hte new trail
+            if self.showing_new_trail:
+                print('updating all diagnostics based on the addition of a new trail. This may take a moment...')
+                update_diagnostics(str(self.sat_dir), overwrite=True,
+                                   image_list = [str(self.image_path)])
 
-        self.trail_index += 1
+        # if we're moving on from a new trail, ensure we move to the
+        # final inspection image
+        if self.showing_new_trail:
+            self.ext = 1
+            self.trail_index = 999
+            self.showing_new_trail = False
 
-        print('extension: ',self.ext)
-        print('catalog length: ',len(self.catalog))
+        else:
+
+            print('\nMoving to the next trail')
+            plt.close('all')
+
+            self.trail_index += 1
+
+            print('extension: ',self.ext)
+            print('catalog length: ',len(self.catalog))
 
         if self.trail_index >= len(self.catalog):
             print('No more trails on this iamge/extension')
@@ -775,35 +797,64 @@ class inspect_sat_masks(WfcWrapper):
             print('\n Undoing all changes')
             plt.close('all')
 
-            # move the backup of the diagnostic plot over
-            if Path('_current_updated_trail_diagnostic.png').is_file():
-                os.remove('_current_updated_trail_diagnostic.png')
+            if self.showing_new_trail:
 
-            # replace the working image diagnostic plot
-            shutil.copyfile(self.image_diagnostic_path, 
-                        self.updated_image_diagnostic)
+                # delete new image and trail diagnostics
+                
+                if Path('_current_updated_trail_diagnostic.png').is_file():
+                    os.remove('_current_updated_trail_diagnostic.png')
+                shutil.copyfile(self.image_diagnostic_path, 
+                                self.updated_image_diagnostic)
 
-            # reload the catalog
-            self.load_catalog()
+                # also remove the trail profile file
+                if Path(self.trail_profile_path).is_file():
+                    os.remove(self.trail_profile_path)
 
-            # reload the images
-            self.load_images()
+                # want to jump back to the final inspection plot
+            
+                # reload the catalog and images
+                self.load_catalog()
+                self.load_images()
 
-            if self.menu_type == 'trail':
-                # show the original diagnostic
-                self.load_trail_diagnostic()
+                self.ext = 1
+                self.trail_index = len(self.catalog)
+                self.showing_new_trail = False
+                self.updates_made = False
 
-                # reload the original 1d profile
-                self.load_1d_prof()
+                self.next_trail()
 
             else:
-                self.ext = 1  # reset to index present when we inspect image
-                shutil.copyfile(self.image_diagnostic_path, self.updated_image_diagnostic)
-                self.load_diagnostic()
+
+                # move the backup of the diagnostic plot over
+                if Path('_current_updated_trail_diagnostic.png').is_file():
+                    os.remove('_current_updated_trail_diagnostic.png')
+
+                # replace the working image diagnostic plot
+                shutil.copyfile(self.image_diagnostic_path, 
+                                self.updated_image_diagnostic)
+
+                # reload the catalog
+                self.load_catalog()
+
+                # reload the images
+                self.load_images()
+
+                if self.menu_type == 'trail':
+                    # show the original diagnostic
+                    self.load_trail_diagnostic()
+
+                    # reload the original 1d profile
+                    self.load_1d_prof()
+
+                else:
+                    ### to do: check if this is necessary
+                    self.ext = 1  # reset to index present when we inspect image
+                    shutil.copyfile(self.image_diagnostic_path, self.updated_image_diagnostic)
+                    self.load_diagnostic()
 
 
-            # reset updates_made flag
-            self.updates_made = False
+                # reset updates_made flag
+                self.updates_made = False
 
 
     def reset_exposure(self):

@@ -66,8 +66,8 @@ def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True,
                 # define files we'll be loading
                 catalog_path = cwd + '/' + root + '_ext{}_mrt_catalog.fits'.format(ext)
                 image_path = image_dir + '/' + root + '.fits'
-                segmentation_path_4 = cwd + '/{}_ext{}_mrt_segment.fits'.format(root, ext)
-                segmentation_path_1 = cwd + '/{}_ext{}_mrt_segment.fits'.format(root, ext)
+                segmentation_path_4 = cwd + '/{}_ext4_mrt_segment.fits'.format(root)
+                segmentation_path_1 = cwd + '/{}_ext1_mrt_segment.fits'.format(root)
 
                 # check that all of them exist
                 file_list = [catalog_path, image_path, segmentation_path_4,
@@ -145,7 +145,7 @@ def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True,
                         profile = fits.getdata(profile_file)
                         profile_hdr = fits.getheader(profile_file)
 
-                        make_trail_diagnostic(image_arr,mask_arr,trail_mask_arr,row,profile,profile_hdr, root=root, output_file = output_file)
+                        make_trail_diagnostic(image_arr,mask_arr,trail_mask_arr,row,profile,profile_hdr, root=root, output_file = output_file, overwrite=overwrite)
 
 
     if remake_image_diagnostics:
@@ -213,4 +213,4 @@ def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True,
                                 scale=[-1,3],
                                 cmap='Greys',
                                 output_file = output_file, 
-                                min_mask_width=10)
+                                min_mask_width=10, overwrite=overwrite)

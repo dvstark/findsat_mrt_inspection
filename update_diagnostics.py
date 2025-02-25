@@ -23,7 +23,8 @@ def check_files_exist(files):
     return exists    
 
 def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True, 
-                       remake_image_diagnostics = True, overwrite=False):
+                       remake_image_diagnostics = True, overwrite=False, 
+                       image_list=None):
 
 
 
@@ -32,7 +33,10 @@ def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True,
     # get the list of files:
     cwd = sat_dir  #'/Users/dstark/supercal/09575/satellites'
     image_dir = cwd + '/../'
-    image_list = glob.glob(image_dir + '*flc.fits')
+
+    # if no image_list specified, use everything in the image directory
+    if image_list is None:
+        image_list = glob.glob(image_dir + '*flc.fits')
 
     # set up log
     logfile = cwd + '/update_diagnostics_log.txt'

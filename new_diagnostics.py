@@ -55,7 +55,11 @@ def make_trail_diagnostic(image_arr,
                     vmin=image_med - scale[0]*image_stddev,
                     vmax=image_med + scale[1]*image_stddev)
 
-        ax.imshow(np.ma.masked_where(trail_mask == 0, trail_mask)*255, alpha=0.5, origin='lower', aspect='auto', cmap='Set1')
+        if row['status'] == 2:
+            cmap = 'Blues'
+        else:
+            cmap = 'Reds'
+        ax.imshow(np.ma.masked_where(trail_mask == 0, trail_mask)*255, alpha=0.5, origin='lower', aspect='auto', cmap=cmap)
     p3a1.set_title('Image with trail mask')
 
     # make the big masked image

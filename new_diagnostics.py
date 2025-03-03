@@ -56,11 +56,14 @@ def make_trail_diagnostic(image_arr,
                     vmax=image_med + scale[1]*image_stddev)
 
         if row['status'] == 2:
-            cmap = 'Blues'
+            trail_cmap = 'bwr'
         else:
-            cmap = 'Reds'
-        ax.imshow(np.ma.masked_where(trail_mask == 0, trail_mask)*255, alpha=0.5, origin='lower', aspect='auto', cmap=cmap)
+            trail_cmap = 'bwr_r'
+        ax.imshow(np.ma.masked_where(trail_mask == 0, trail_mask)*255, alpha=0.75, origin='lower', aspect='auto', cmap=trail_cmap)
     p3a1.set_title('Image with trail mask')
+    p3a1.text(0.01, 0.98, 'Accepted', color='blue', transform = p3a1.transAxes, fontsize='x-large', va='top',bbox=dict(facecolor='white', alpha=0.5))
+    p3a1.text(0.01, 0.85, 'Rejected', color='red', transform = p3a1.transAxes, fontsize='x-large', va='top',bbox=dict(facecolor='white', alpha=0.5))
+
 
     # make the big masked image
     for ax, image, final_mask in zip([p4a1, p4a2], image_arr, final_mask_arr):

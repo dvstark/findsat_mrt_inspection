@@ -520,8 +520,9 @@ class inspect_sat_masks(WfcWrapper):
 
         else:
 
-            if self.catalog['status'][self.trail_index] < self.min_allowed_status:
-                self.next_trail()  # I'm calling a function inside itself...this seems bad
+            # skip to next trail if this is among those that are automatically removed
+            if (self.catalog['status'][self.trail_index] < self.min_allowed_status) & (self.catalog['status'][self.trail_index] >= 0):
+                self.next_trail()  
             else:
                 self.trail_id = self.catalog['id'][self.trail_index]
 

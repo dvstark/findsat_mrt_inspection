@@ -99,6 +99,20 @@ class inspect_sat_masks(WfcWrapper):
         self.image_index = -1
         self.trail_index = -1
 
+        # see if status.pkl exists. If not create it and populate with the list 
+        # of images in this directory
+        progress_file = Path.joinpath(self.sat_dir, "inspection_progress.csv")
+        if not progress_file.exists():
+            # create a table with the inspection status info
+            progress = Table()
+            file_list = []
+            progress['files'] = np.sort(np.concatenate([self.image_roots, self.image_roots]))
+            progress['extension'] = [4, 1] * len(self.image_roots)
+            progress['status'] = 'pending'
+            self.progress = progress
+        else:
+            self.progress = Table.read(progress_file)
+
         # see if _left_off.txt exists. If so, pick up there, unless restart=True
         left_off_file = Path.joinpath(self.sat_dir, '_left_off.txt')
         if left_off_file.exists() and not restart:
@@ -323,7 +337,6 @@ class inspect_sat_masks(WfcWrapper):
         self.specify_trail_paths()
 
         # need to extract the profile from the image
-        import pdb
         rotated, [[rx1, ry1], [rx2, ry2]], theta = u.rotate_image_to_trail(self.image,
                                                                          endpoints[0])
 

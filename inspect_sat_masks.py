@@ -105,9 +105,7 @@ class inspect_sat_masks(WfcWrapper):
         if not progress_file.exists():
             # create a table with the inspection status info
             progress = Table()
-            file_list = []
-            progress['files'] = np.sort(np.concatenate([self.image_roots, self.image_roots]))
-            progress['extension'] = [4, 1] * len(self.image_roots)
+            progress['files'] = np.sort(self.image_roots)
             progress['status'] = 'pending'
             self.progress = progress
         else:
@@ -592,8 +590,26 @@ class inspect_sat_masks(WfcWrapper):
         self.prof = np.copy(prof)
         self.prof_hdr = fits.getheader(self.trail_profile_path)
 
-    def next_image(self):
+    def update_image_status(self, status):
+
+        # find entry in status table
+        sel=np.where(self.progress['files'] == self.current_image)[0]
+
+        # if empty, make an entry
+        if len(sel) == 0:
+            self.progress.add_row([self.current_image, status])
+        else:
+            # if not empty update the status
+            self.progress['status'][sel] = status
+
+        # save the status file
+        self.progress.write(Path.joinpath(self.sat_dir, 'inspection_progress.csv') , overwrite=True)
+
+    def next_image(self, save_status=None):
         
+        if save_status is not None:
+            self.update_image_status(save_status)
+
         
         # reset the trail index
         self.trail_index = -1
@@ -926,8 +942,13 @@ class inspect_sat_masks(WfcWrapper):
                          'm': {'desc': '[m] Display menu','func':self.nothing},
                          'Q': {'desc': '[Q] Quit', 'func': self.exit}
                          }
+        # set kwargs to None to start, update where necesary
+        for key in trail_options.keys():
+            trail_options[key]['kwargs'] = None
+
 
         image_options = {'s': {'desc':'[s] Save and go to next image', 'func':self.next_image},
+                         'k': {'desc':'[k] Skip to the next image', 'func':self.next_image},
                          'bi': {'desc': '[bi] Go back to previous image', 'func': self.previous_image},
                          'n': {'desc': '[n] Add a completely new trail', 'func': self.add_new_trail},
                          'r': {'desc': '[r] Re-examine trails', 'func': self.reexamine_trails},
@@ -937,6 +958,12 @@ class inspect_sat_masks(WfcWrapper):
                          'm': {'desc': '[m] Display menu','func':self.nothing},
                          'Q': {'desc': '[Q] Quit', 'func': self.exit}
                          }
+        # set kwargs to None to start, update where necesary
+        for key in image_options.keys():
+            image_options[key]['kwargs'] = None
+        image_options['s']['kwargs'] = {'save_status':'saved'}
+        image_options['k']['kwargs'] = {'save_status':'skipped'}
+
 
         if self.menu_type == 'trail':
             options = trail_options
@@ -962,7 +989,13 @@ class inspect_sat_masks(WfcWrapper):
                 print("That command does not do anything...yet...")
             else:
                 proceed = True
-                options[user_input]['func']()
+
+                # there has to be a better way to handle kwargs = None, but haven't found it yet
+                if options[user_input]['kwargs'] is not None:
+                    options[user_input]['func'](**options[user_input]['kwargs'])
+                else:
+                    options[user_input]['func']()
+
                 if (user_input in refresh_options) & (self.menu_type == 'trail'):
                     print(self.catalog)
                     self.regenerate_diagnostics()

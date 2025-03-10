@@ -22,13 +22,56 @@ def check_files_exist(files):
     exists = np.array(exists)
     return exists    
 
+def load_resources(image_dir, sat_dir, root, logger=logger):
+    # image 
+    image_path = image_dir + '/' + root + '.fits'
+
+    # catalogs
+    catalog_path_4 = sat_dir + '/' + root + '_ext4_mrt_catalog.fits'
+    catalog_path_1 = sat_dir + '/' + root + '_ext4_mrt_catalog.fits'
+
+    # segmentation file
+    segmentation_path_4 = sat_dir + '/' + root + '_ext4_mrt_segment.fits'
+    segmentation_path_1 = sat_dir + '/' + root + '_ext1_mrt_segment.fits'
+
+    # check for missing files
+    file_list = [catalog_path_4, catalog_path_1, image_path,
+                    segmentation_path_4, segmentation_path_1]
+    exist = check_files_exist(file_list)
+
+    # if any are missing, log them, then skip over this iteration
+    if np.any(exist == False):
+        print('Some files missing; see log file for details')
+
+        for e, f in zip(exist, file_list):
+            if ~e:
+                logger.warning('Missing file: ' + f)
+
+        return None           
+
+    # otherwise, load everything
+    resources = {}
+    # catalogs
+    resources['catalogs'][1] = Table.read(catalog_path_1)
+    resources['catalogs'][4] = Table.read(catalog_path_4)
+
+    # image (rebin it)
+    hdu = fits.open(image_path)
+    wfc1 = block_reduce(hdu[4].data, 4, func=np.nansum)
+    wfc2 = block_reduce(hdu[1].data, 4, func=np.nansum)
+    hdu.close()
+    resources['image'][4] = wfc1
+    resources['image'][1] = wfc2
+
+    # segmentation file
+    resources['segmentation'][4] = fits.getdata(segmentation_path_4)
+    resources['segmentation'][1] = fits.getdata(segmentation_path_1)
+
+
 def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True, 
                        remake_image_diagnostics = True, overwrite=False, 
                        image_list=None):
 
-
-
-    #image_rebin = 4  # make sure this matches the original file
 
     # get the list of files:
     cwd = sat_dir  #'/Users/dstark/supercal/09575/satellites'
@@ -48,173 +91,126 @@ def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True,
     logger.addHandler(FileOutputHandler)
     logger.setLevel('DEBUG')
 
-    #if not Path(logfile).exists():
-    #    os.system('touch' + logfile)
-
-    #logging.basicConfig(filename=logfile, 
-    #                    format="%(name)s → %(levelname)s: %(message)s",
-    #                    filemode='w')
+    # note the start time
     now = datetime.datetime.now()
     logger.info('Started update_diagnostics at ' + now.strftime("%m/%d/%Y, %H:%M:%S") + '\n')
+
+    ###########################################
+    ## Next, find and load all needed files ###
+    ###########################################
 
     # extract the roots
     roots = np.array([image.split('/')[-1].split('.fits')[0] for image in image_list])
 
-    if remake_trail_diagnostics:
+    # cycle
+    for root in roots:
+        
+        print('On file = {}'.format(root))
 
-        for root in roots:
-            print('file = {}'.format(root))
+        # load the images/catalogs
+        resources = load_resources(image_dir, sat_dir, root, logger=logger)
+
+        # skip to next case if we're missing anything
+        if resources is None:
+            continue
+
+
+        # The mask_arr, image_arr, segmentation_arr, and catalog_arr can be created here
+
+        #total mask
+        mask_arr = [resources['segmentation'][4] > 0, resources['segmentation'][1] > 0]
+
+        # segmentation
+        segmentation_arr = [resources['segmentation'][4], resources['segmentation'][1]]
+
+        # image
+        image_arr = [resources['image'][4], resources['image'][1]]
+
+        # catalog
+        catalog_arr = [resources['catalog'][4], resources['catalog'][1]]
+
+
+        # begin remaking individual trail diagnostic plots
+        if remake_trail_diagnostics:
+            
+            print('Remaking trail diagnostic plots')
+
             for ext in [1, 4]:
-                print('extension = {}'.format(ext))
 
-                # define files we'll be loading
-                catalog_path = cwd + '/' + root + '_ext{}_mrt_catalog.fits'.format(ext)
-                image_path = image_dir + '/' + root + '.fits'
-                segmentation_path_4 = cwd + '/{}_ext4_mrt_segment.fits'.format(root)
-                segmentation_path_1 = cwd + '/{}_ext1_mrt_segment.fits'.format(root)
+                print('On extension = {}'.format(ext)) 
 
-                # check that all of them exist
-                file_list = [catalog_path, image_path, segmentation_path_4,
-                             segmentation_path_1]
-                exist = check_files_exist(file_list)
+                catalog = resources['catalogs'][ext]
 
-                # if any are missing, log them, then skip over this iteration
-                if np.any(exist == False):
-                    print('Some files missing; see log file for details')
-
-                    for e, f in zip(exist, file_list):
-                        if ~e:
-                            logger.warning('Missing file: ' + f)
-
-                    continue   
-
-                # load catalog first to see if it's empty
-                catalog = Table.read(catalog_path)
-
+                # check if there are any entries in the catalog. Skip if none.
                 if len(catalog) == 0:
                     print('no trail diagnostics to update')
-                else:
-                    for row in catalog:
-                        print('Updating trail diagnostic plots for {}, ext {}, trail id {}'.format(root, ext, row['id']))
+                    continue
 
-                        output_file = cwd + '/' + root + '_ext{}_mrt/{}_full_ext{}_mrt_{}_diagnostic.png'.format(ext, root, ext, row['id'])
-                        if Path(output_file).exists() & (overwrite == False):
-                            print('Output file {} already exists.'.format(output_file))
-                            print('Set overwrite=True to replace it')
-                            continue
+                # otherwise, iterate through entries
+                for row in catalog:
 
-                        # load image file and arrange. Have to rebin to match 
-                        # findsat_mrt output
-                        hdu = fits.open(image_path)
-                        wfc1 = block_reduce(hdu[4].data, 4, func=np.nansum)
-                        wfc2 = block_reduce(hdu[1].data, 4, func=np.nansum)
-                        hdu.close()
+                    print('Updating trail diagnostic plots for {}, ext {}, trail id {}'.format(root, ext, row['id']))
 
-                        image_arr = [wfc1, wfc2]
+                    # set up output file. Check if it exists, and skip if overwrite not allowed
+                    output_file = cwd + '/' + root + '_ext{}_mrt/{}_full_ext{}_mrt_{}_diagnostic.png'.format(ext, root, ext, row['id'])
+                    if Path(output_file).exists() & (overwrite == False):
+                        print('Output file {} already exists.'.format(output_file))
+                        print('Set overwrite=True to replace it')
+                        continue
 
-                        # load segmentation file, each extension
-                        segment_wfc1 = fits.getdata(segmentation_path_4)
-                        segment_wfc2 = fits.getdata(segmentation_path_1)
+                    # Create the individual trail mask
+                    image = resources['image'][ext]
+                    trail_seg, trail_mask = u.create_mask(image, [row['id']],
+                                                        [row['endpoints']], 
+                                                        [row['width']], 
+                                                        min_mask_width=40/image_rebin)
 
-                        # masks
-                        if ext == 4:
-                            image = wfc1
-                        else:
-                            image = wfc2
-                        trail_seg, trail_mask = u.create_mask(image, [row['id']],
-                                                            [row['endpoints']], 
-                                                            [row['width']], 
-                                                            min_mask_width=40/image_rebin)
+                    if ext == 4:
+                        trail_mask_wfc1 = trail_mask
+                        trail_mask_wfc2 = np.zeros_like(trail_mask_wfc1)
+                    elif ext == 1:
+                        trail_mask_wfc2 = trail_mask
+                        trail_mask_wfc1 = np.zeros_like(trail_mask_wfc2)
 
-                        if ext == 4:
-                            trail_mask_wfc1 = trail_mask
-                            trail_mask_wfc2 = np.zeros_like(trail_mask_wfc1)
-                        elif ext == 1:
-                            trail_mask_wfc2 = trail_mask
-                            trail_mask_wfc1 = np.zeros_like(trail_mask_wfc2)
+                    # ...and corresponding arra
+                    trail_mask_arr = [trail_mask_wfc1, trail_mask_wfc2]
 
-                        trail_mask_arr = [trail_mask_wfc1, trail_mask_wfc2]
+                    # load the 1d trail profile and its header
+                    profile_file = sat_dir + '/' + root + '_ext{}_mrt/'.format(ext) + root + '_ext{}_mrt_1dprof_{}.fits'.format(ext, row['id'])
 
-                        #get total mask with good trails only
-                        mask_arr = [segment_wfc1 > 0, segment_wfc2 > 0]
+                    # if profile is missing, skip over this step
+                    if not Path(profile_file).exists():
+                        logging.warning('Missing 1D profile file: ' + profile_file)
+                        continue
 
-                        # load the 1d trail profile and its header
-                        profile_file = cwd + '/' + root + '_ext{}_mrt/'.format(ext) + root + '_ext{}_mrt_1dprof_{}.fits'.format(ext, row['id'])
+                    profile = fits.getdata(profile_file)
+                    profile_hdr = fits.getheader(profile_file)
 
-                        # if profile is missing, skip over this step
-                        if not Path(profile_file).exists():
-                            logging.warning('Missing file: ' + f)
-                            continue
-
-                        profile = fits.getdata(profile_file)
-                        profile_hdr = fits.getheader(profile_file)
-
-                        make_trail_diagnostic(image_arr,mask_arr,trail_mask_arr,row,profile,profile_hdr, root=root, output_file = output_file, overwrite=overwrite)
+                    make_trail_diagnostic(image_arr, mask_arr, trail_mask_arr,
+                                          row,profile, profile_hdr, root=root,
+                                          output_file = output_file,
+                                          overwrite=overwrite)
 
 
-    if remake_image_diagnostics:
+        if remake_image_diagnostics:
 
-        for root in roots:
-
-            print('file = {}'.format(root))
-
-            # define the files to be loaded:
-            catalog_path_4 = sat_dir + '/{}_ext4_mrt_catalog.fits'.format(root)
-            catalog_path_1 = sat_dir + '/{}_ext1_mrt_catalog.fits'.format(root)
-            image_path = image_dir + '/' + root + '.fits'
-            segmentation_path_4 = sat_dir + '/{}_ext{}_mrt_segment.fits'.format(root, 4)
-            segmentation_path_1 = sat_dir + '/{}_ext{}_mrt_segment.fits'.format(root, 1)
-
-            # check that all of them exist
-            file_list = [catalog_path, image_path, segmentation_path_4,
-                            segmentation_path_1]
-            exist = check_files_exist(file_list)
-
-            # if any are missing, log them, then skip over this iteration
-            if np.any(exist == False):
-                print('Some files missing; see log file for details')
-                for e, f in zip(exist, file_list):
-                    if ~e:
-                        logging.warning('Missing file: ' + f)
-
-                continue               
-
-            # also see if the diagnostic already exists
-            output_file = cwd + '/' + '{}_full_mrt_diagnostic.png'.format(root)
+            # see if the diagnostic already exists
+            output_file = sat_dir + '/' + root + '_full_mrt_diagnostic.png'
 
             if Path(output_file).exists() & (overwrite == False):
                 print('Output file {} already exists.'.format(output_file))
                 print('Set overwrite=True to replace it')
-                continue
 
-            # load the catalogs for each chip and combined
-            catalog_4 = Table.read(catalog_path_4)
-            catalog_1 = Table.read(catalog_path_1)
-            catalog_arr = [catalog_4, catalog_1]
+            else:
 
-            # get image array
-            hdu = fits.open(image_path)
-            wfc1 = block_reduce(hdu[4].data, 4, func=np.nansum)
-            wfc2 = block_reduce(hdu[1].data, 4, func=np.nansum)
-            image_arr = [wfc1, wfc2]
-
-            # get the current final masks
-            segment_wfc1 = fits.getdata(segmentation_path_4)
-            segment_wfc2 = fits.getdata(segmentation_path_1)
-
-            segment_arr = [segment_wfc1, segment_wfc2]
-            final_mask_arr = [segment_wfc1 > 0, segment_wfc2 > 0]
-
-            sat_dir = cwd
-
-
-            make_image_diagnostic(image_arr,
-                                final_mask_arr,
-                                segment_arr,
-                                catalog_arr,
-                                root,
-                                sat_dir,
-                                scale=[-1,3],
-                                cmap='Greys',
-                                output_file = output_file, 
-                                min_mask_width=10, overwrite=overwrite)
+                make_image_diagnostic(image_arr,
+                                    mask_arr,
+                                    segmentation_arr,
+                                    catalog_arr,
+                                    root,
+                                    sat_dir,
+                                    scale=[-1,3],
+                                    cmap='Greys',
+                                    output_file = output_file, 
+                                    min_mask_width=40/image_rebin, 
+                                    overwrite=overwrite)

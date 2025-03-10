@@ -502,7 +502,7 @@ class inspect_sat_masks(WfcWrapper):
                 print('updating all diagnostics based on the addition of a new trail. This may take a moment...')
                 update_diagnostics(str(self.sat_dir), overwrite=True,
                                    image_list = [str(self.image_path)],
-                                   make_image_diagnostics=False)
+                                   remake_image_diagnostics=False)
 
         # if we're moving on from a new trail, ensure we move to the
         # final inspection image

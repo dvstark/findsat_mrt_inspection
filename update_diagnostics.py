@@ -22,7 +22,7 @@ def check_files_exist(files):
     exists = np.array(exists)
     return exists    
 
-def load_resources(image_dir, sat_dir, root, logger=logger):
+def load_resources(image_dir, sat_dir, root, logger=None):
     # image 
     image_path = image_dir + '/' + root + '.fits'
 

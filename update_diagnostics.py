@@ -50,10 +50,13 @@ def load_resources(image_dir, sat_dir, root, logger=None):
         return None           
 
     # otherwise, load everything
-    resources = {}
+    resources = {'catalog':{}, 
+                 'image':{}, 
+                 'segmentation':{}
+    }
     # catalogs
-    resources['catalogs'][1] = Table.read(catalog_path_1)
-    resources['catalogs'][4] = Table.read(catalog_path_4)
+    resources['catalog'][1] = Table.read(catalog_path_1)
+    resources['catalog'][4] = Table.read(catalog_path_4)
 
     # image (rebin it)
     hdu = fits.open(image_path)
@@ -66,6 +69,8 @@ def load_resources(image_dir, sat_dir, root, logger=None):
     # segmentation file
     resources['segmentation'][4] = fits.getdata(segmentation_path_4)
     resources['segmentation'][1] = fits.getdata(segmentation_path_1)
+
+    return resources
 
 
 def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True, 
@@ -80,6 +85,9 @@ def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True,
     # if no image_list specified, use everything in the image directory
     if image_list is None:
         image_list = glob.glob(image_dir + '*flc.fits')
+
+    print('updating diagnostics for the following:')
+    print(image_list)
 
     # set up log
     logfile = cwd + '/update_diagnostics_log.txt'
@@ -139,7 +147,7 @@ def update_diagnostics(sat_dir, image_rebin=4, remake_trail_diagnostics = True,
 
                 print('On extension = {}'.format(ext)) 
 
-                catalog = resources['catalogs'][ext]
+                catalog = resources['catalog'][ext]
 
                 # check if there are any entries in the catalog. Skip if none.
                 if len(catalog) == 0:

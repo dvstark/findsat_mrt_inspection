@@ -1,1 +1,1 @@
-ds9_exe: '/Applications/SAOImageDS9.app/Contents/MacOS/ds9'
+ds9_exe: '/usr/local/bin/ds9'

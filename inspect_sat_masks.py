@@ -207,7 +207,8 @@ class inspect_sat_masks(WfcWrapper):
     def load_diagnostic(self):
         #self.image_diagnostic = Path.joinpath(self.sat_dir, self.current_image + '_full_mrt_diagnostic.png'.format(self.ext))
 
-        image_diagnostic = mpimage.imread(self.updated_image_diagnostic)
+        #image_diagnostic = mpimage.imread(self.updated_image_diagnostic)
+        image_diagnostic = mpimage.imread(self.image_diagnostic_path)
         
         show_image_diagnostic(image_diagnostic)
 
@@ -430,11 +431,11 @@ class inspect_sat_masks(WfcWrapper):
         self.specify_trail_paths()
 
         # trail diagnostic plot
-        if Path('./_current_updated_trail_diagnostic.png').is_file():
-            shutil.copyfile('./_current_updated_trail_diagnostic.png', self.trail_diagnostic_path)
+        #if Path('./_current_updated_trail_diagnostic.png').is_file():
+        #    shutil.copyfile('./_current_updated_trail_diagnostic.png', self.trail_diagnostic_path)
 
         # image diagnostic plot
-        shutil.copyfile(self.updated_image_diagnostic, self.image_diagnostic_path)
+        #shutil.copyfile(self.updated_image_diagnostic, self.image_diagnostic_path)
 
         #1d profile data
         fits.writeto(self.trail_profile_path, self.prof, header=self.prof_hdr, overwrite=True)
@@ -493,16 +494,19 @@ class inspect_sat_masks(WfcWrapper):
     def next_trail(self):
         
         if self.updates_made:
-            self.save()
-            self.updates_made = False
+            
+            self.save() # this saves the output files but not the diagnostic plots
 
             # if moving on from a newly defined trail, need to
             # regenerate plots for all trails to reflect hte new trail
-            if self.showing_new_trail:
-                print('updating all diagnostics based on the addition of a new trail. This may take a moment...')
-                update_diagnostics(str(self.sat_dir), overwrite=True,
-                                   image_list = [str(self.image_path)],
-                                   remake_image_diagnostics=False)
+            print('updating all diagnostic plopts for this image...this may take a moment')
+            plt.ioff()
+            update_diagnostics(str(self.sat_dir), overwrite=True,
+                                   image_list = [str(self.image_path)])
+                                   #remake_image_diagnostics=False)
+            plt.ion()
+
+            self.updates_made = False
 
         # if we're moving on from a new trail, ensure we move to the
         # final inspection image
@@ -539,13 +543,6 @@ class inspect_sat_masks(WfcWrapper):
 
                 self.specify_trail_paths()
 
-                # self.trail_diagnostic_path = Path.joinpath(self.sat_dir, 
-                #                                            self.image_roots[self.image_index] + '_ext{}_mrt'.format(self.ext), 
-                #                                            self.image_roots[self.image_index] + '_full_ext{}_mrt_{}_diagnostic.png'.format(self.ext, self.trail_id))
-                # self.trail_profile_path = Path.joinpath(self.sat_dir, 
-                #                                         self.image_roots[self.image_index] + '_ext{}_mrt'.format(self.ext), 
-                #                                         self.image_roots[self.image_index] + '_ext{}_mrt_1dprof_{}.fits'.format(self.ext, self.trail_id))
-            
                 self.load_trail_diagnostic()
 
                 # backup the trail diagnostic file in case we start editing
@@ -661,7 +658,7 @@ class inspect_sat_masks(WfcWrapper):
             # load the images (original, mask, segment)
             self.load_images()
 
-            # otherwise load the trail catalog 
+            # oad the trail catalog 
             self.load_catalog()
 
             if len(self.catalog) > 0:
@@ -701,7 +698,7 @@ class inspect_sat_masks(WfcWrapper):
         plt.close('all')
         self.quit = True
 
-    def regenerate_diagnostics(self):
+    def regenerate_diagnostics(self, remake_trail_diagnostic=True, remake_image_diagnostic=False):
 
         plt.close('all')
 
@@ -780,30 +777,33 @@ class inspect_sat_masks(WfcWrapper):
         else:
             catalog_arr = [catalog_4, self.catalog]
 
-        make_trail_diagnostic(image_arr,full_mask_arr,trail_mask_arr,
-                              self.catalog[self.trail_index],self.prof,
-                              self.prof_hdr, root=self.current_image,
-                              overwrite=True,
-                              output_file='_current_updated_trail_diagnostic.png')
+        if remake_trail_diagnostic:
+            make_trail_diagnostic(image_arr,full_mask_arr,trail_mask_arr,
+                                  self.catalog[self.trail_index],self.prof,
+                                  self.prof_hdr, root=self.current_image,
+                                  overwrite=True,
+                                  output_file='_current_updated_trail_diagnostic.png')
         
-        make_image_diagnostic(image_arr,
-                            full_mask_arr,
-                            segment_arr,
-                            catalog_arr,
-                            self.current_image,
-                            self.sat_dir,
-                            big_rebin=16,
-                            scale=[-1,3],
-                            cmap='Greys',
-                            output_file = self.updated_image_diagnostic, 
-                            min_mask_width=10,
-                            overwrite=True)
+        if remake_image_diagnostic:
+            make_image_diagnostic(image_arr,
+                                  full_mask_arr,
+                                  segment_arr,
+                                  catalog_arr,
+                                  self.current_image,
+                                  self.sat_dir,
+                                  big_rebin=16,
+                                  scale=[-1,3],
+                                  cmap='Greys',
+                                  output_file = self.updated_image_diagnostic, 
+                                  min_mask_width=10,
+                                  overwrite=True)
         # make_trail_diagnostic(self.image, submask, self.mask, self.catalog[self.trail_index],
         #                       self.prof, self.prof_hdr, scale=[-1,3], cmap='Greys',
         #                       root=self.current_image, big_rebin=16, 
         #                       output_file='_current_updated_diagnostic.png')
         plt.close('all')
         self.load_revised_trail_diagnostic()
+        
 
     def toggle_show_all_trails(self):
         if self.inspect_good_only == True:
@@ -834,8 +834,8 @@ class inspect_sat_masks(WfcWrapper):
                 
                 if Path('_current_updated_trail_diagnostic.png').is_file():
                     os.remove('_current_updated_trail_diagnostic.png')
-                shutil.copyfile(self.image_diagnostic_path, 
-                                self.updated_image_diagnostic)
+                #shutil.copyfile(self.image_diagnostic_path, 
+                #                self.updated_image_diagnostic)
 
                 # also remove the trail profile file
                 if Path(self.trail_profile_path).is_file():
@@ -861,8 +861,8 @@ class inspect_sat_masks(WfcWrapper):
                     os.remove('_current_updated_trail_diagnostic.png')
 
                 # replace the working image diagnostic plot
-                shutil.copyfile(self.image_diagnostic_path, 
-                                self.updated_image_diagnostic)
+                #shutil.copyfile(self.image_diagnostic_path, 
+                #                self.updated_image_diagnostic)
 
                 # reload the catalog
                 self.load_catalog()
@@ -880,7 +880,7 @@ class inspect_sat_masks(WfcWrapper):
                 else:
                     ### to do: check if this is necessary
                     self.ext = 1  # reset to index present when we inspect image
-                    shutil.copyfile(self.image_diagnostic_path, self.updated_image_diagnostic)
+                    #shutil.copyfile(self.image_diagnostic_path, self.updated_image_diagnostic)
                     self.load_diagnostic()
 
 
@@ -947,8 +947,8 @@ class inspect_sat_masks(WfcWrapper):
             trail_options[key]['kwargs'] = None
 
 
-        image_options = {'s': {'desc':'[s] Save and go to next image', 'func':self.next_image},
-                         'k': {'desc':'[k] Skip to the next image', 'func':self.next_image},
+        image_options = {'s': {'desc':'[s] Mark saved and go to next image', 'func':self.next_image},
+                         'k': {'desc':'[k] Mark skipped to the next image', 'func':self.next_image},
                          'bi': {'desc': '[bi] Go back to previous image', 'func': self.previous_image},
                          'n': {'desc': '[n] Add a completely new trail', 'func': self.add_new_trail},
                          'r': {'desc': '[r] Re-examine trails', 'func': self.reexamine_trails},
@@ -964,17 +964,17 @@ class inspect_sat_masks(WfcWrapper):
         image_options['s']['kwargs'] = {'save_status':'saved'}
         image_options['k']['kwargs'] = {'save_status':'skipped'}
 
-
         if self.menu_type == 'trail':
             options = trail_options
         elif self.menu_type == 'image':
             options = image_options
 
-        refresh_options = ['w', 'r', 'a', 'n']
+        refresh_options = ['w', 'r', 'a']
                    
         print('\n Choose an option:\n')
         for key in options:
             print(options[key]['desc'])
+        print('updates made? : {}'.format(self.updates_made))
 
         proceed = False
 
@@ -990,16 +990,19 @@ class inspect_sat_masks(WfcWrapper):
             else:
                 proceed = True
 
+                if (user_input in refresh_options) & (self.menu_type == 'trail'):
+                    self.updates_made = True
+
                 # there has to be a better way to handle kwargs = None, but haven't found it yet
                 if options[user_input]['kwargs'] is not None:
                     options[user_input]['func'](**options[user_input]['kwargs'])
                 else:
-                    options[user_input]['func']()
+                    options[user_input]['func']()  
+                # note: menu type has been updated
 
                 if (user_input in refresh_options) & (self.menu_type == 'trail'):
                     print(self.catalog)
                     self.regenerate_diagnostics()
-                    self.updates_made=True
 
 
 if __name__ == '__main__':

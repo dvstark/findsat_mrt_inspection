@@ -28,7 +28,7 @@ def load_resources(image_dir, sat_dir, root, logger=None):
 
     # catalogs
     catalog_path_4 = sat_dir + '/' + root + '_ext4_mrt_catalog.fits'
-    catalog_path_1 = sat_dir + '/' + root + '_ext4_mrt_catalog.fits'
+    catalog_path_1 = sat_dir + '/' + root + '_ext1_mrt_catalog.fits'
 
     # segmentation file
     segmentation_path_4 = sat_dir + '/' + root + '_ext4_mrt_segment.fits'

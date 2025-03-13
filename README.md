@@ -74,6 +74,13 @@ This program finds all files in a directory and displays diagnostic plots for in
 
 Options will change depending on whether you're looking at an individual trail or the final overview of the image. 
 
+The diagnostic plots for an individual trail has four panels:
+- Top left: The image being considered. Note that both chips are shown, although each iteration in this code only considers a single trail on a single chip
+- Bottom left: The mask for the trail in question. This will be shown whether or not the trail is "accepted". If it's considered a good trail, the mask will be blue. If it's considered a bad trail, the - 
+mask will be red.
+- Top right: The 1d profile of the trail. The width and status of the trail will be indicated.
+- Bottom right: The heavily rebinned, masked image with ALL trails masked, not just the one being considered here. This is useful for ensuring wings are masked.
+
 When looking at individual trails, these are the options:
 * [w] Change trail width
 * [r] Remove trail. Sets a trail as rejected and removes it from the mask
@@ -84,6 +91,11 @@ When looking at individual trails, these are the options:
 * [t] Toggle only show "good" trails. By default, only the robustly identified trails are shown. These are trails that pass several different checks (intial detection, SNR, persistence across image). However, this option lets you display all "candidate" trails, which includes those that were detected in the MRT but failed subsequent checks. This might be useful in cases where a trail is present in the image but not masked (maybe it was detected but failed some later check). Some images have A LOT of trail candidates. You've been warned...If you select this option, it will go back to the start of the list of trails for the image under consideration. 
 * [Q] Quit
 
+After inspecting the diagnostic plots for all individual trails, the final image diagnostic is shown with the following 4 panels:
+- Top-left: The original image
+- Top-right: Image with any trails masked. Each trail will have a different color
+- Bottom left: 1d profiles for all trails detected and flagged as good
+- Bottom left: The  heavily rebinned, masked image with ALL trails masked. This is useful for ensuring wings are masked.
   
 When looking at the overall image, these are the options:
 

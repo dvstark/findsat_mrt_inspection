@@ -7,6 +7,7 @@ import numpy as np
 from astropy.nddata import bitmask, block_reduce
 import acstools.utils_findsat_mrt as u
 from pathlib import Path
+import warnings
 
 image_rebin=4
 
@@ -41,7 +42,11 @@ def make_trail_diagnostic(image_arr,
     p4a1, p4a2 = p4.subplots(2,1)
 
     # set up images
-    __, image_med, image_stddev = sigma_clipped_stats(image_arr)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(action='ignore',
+                                message='Input data contains invalid values (NaNs or infs), which were automatically clipped.')
+        __, image_med, image_stddev = sigma_clipped_stats(image_arr)
     for ax, wfc in zip([p1a1, p1a2], image_arr):
         ax.imshow(wfc, cmap=cmap, origin='lower', aspect='auto',
                     vmin=image_med - scale[0]*image_stddev,
@@ -68,8 +73,12 @@ def make_trail_diagnostic(image_arr,
     # make the big masked image
     for ax, image, final_mask in zip([p4a1, p4a2], image_arr, final_mask_arr):
         masked_image = np.ma.masked_where(final_mask, image)
-        rebinned_masked_image = block_reduce(masked_image, big_rebin, func=np.nanmedian)
-        __, image_med, image_stddev = sigma_clipped_stats(rebinned_masked_image)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(action='ignore',
+                                    message='Input data contains invalid values (NaNs or infs), which were automatically clipped.')
+            rebinned_masked_image = block_reduce(masked_image, big_rebin, func=np.nanmedian)
+ 
+            __, image_med, image_stddev = sigma_clipped_stats(rebinned_masked_image)
 
         ax.imshow(rebinned_masked_image, origin='lower', aspect='auto',
                   vmin=image_med - image_stddev, vmax = image_med + 5*image_stddev)
@@ -143,7 +152,10 @@ def make_image_diagnostic(image_arr,
     p4a1, p4a2 = p4.subplots(2,1)
 
     # set up images
-    __, image_med, image_stddev = sigma_clipped_stats(image_arr)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(action='ignore',
+                                message='Input data contains invalid values (NaNs or infs), which were automatically clipped.')
+        __, image_med, image_stddev = sigma_clipped_stats(image_arr)
     for ax, wfc in zip([p1a1, p1a2], image_arr):
         ax.imshow(wfc, cmap=cmap, origin='lower', aspect='auto',
                     vmin=image_med - scale[0]*image_stddev,
@@ -197,8 +209,11 @@ def make_image_diagnostic(image_arr,
     # make the big masked image
     for ax, image, final_mask in zip([p4a1, p4a2], image_arr, final_mask_arr):
         masked_image = np.ma.masked_where(final_mask, image)
-        rebinned_masked_image = block_reduce(masked_image, big_rebin, func=np.nanmedian)
-        __, image_med, image_stddev = sigma_clipped_stats(rebinned_masked_image)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(action='ignore',
+                                    message='Input data contains invalid values (NaNs or infs), which were automatically clipped.')
+            rebinned_masked_image = block_reduce(masked_image, big_rebin, func=np.nanmedian)
+            __, image_med, image_stddev = sigma_clipped_stats(rebinned_masked_image)
 
         ax.imshow(rebinned_masked_image, origin='lower', aspect='auto',
                   vmin=image_med - image_stddev, vmax = image_med + 5*image_stddev)
@@ -274,8 +289,11 @@ if __name__ == '__main__':
 
     # load image file
     hdu = fits.open(image_file)
-    wfc1 = block_reduce(hdu[4].data, 4, func=np.nansum)
-    wfc2 = block_reduce(hdu[1].data, 4, func=np.nansum)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(action='ignore',
+                                message='Input data contains invalid values (NaNs or infs), which were automatically clipped.')
+        wfc1 = block_reduce(hdu[4].data, 4, func=np.nansum)
+        wfc2 = block_reduce(hdu[1].data, 4, func=np.nansum)
 
     hdu.close()
     image_arr = [wfc1, wfc2]

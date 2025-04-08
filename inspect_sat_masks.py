@@ -456,7 +456,9 @@ class inspect_sat_masks(WfcWrapper):
             h.close()
 
 
-    def specify_image_paths(self):
+    def specify_image_paths(self, check_exists=False):
+
+        '''Define the paths for various required images and diagnostics. Optionally see if they exist'''
 
         # reads image name, current extension, and current trail id (if any) and updates the paths
 
@@ -479,7 +481,24 @@ class inspect_sat_masks(WfcWrapper):
         # image diagnostic
         self.image_diagnostic_path = Path.joinpath(self.sat_dir, self.current_image + '_full_mrt_diagnostic.png')
 
-    def specify_trail_paths(self):
+        if check_exists:
+            paths = np.array([self.image_path, self.segmentation_path, self.mask_path,
+                     self.catalog_path, self.trail_dir])
+            exists = np.array([path.exists() for path in paths])
+            if np.sum(exists) < len(exists):
+                print('ERROR: The following files are missing:')
+                print(paths[~exists])
+
+                return 2
+            else:
+                return 0
+        else:
+            return 0
+
+
+    def specify_trail_paths(self, check_exists=False):
+
+        '''Define the trail profile and diagnostic plot paths. Optionally see if they exist'''
 
         # 1d profile path
         self.trail_profile_path = Path.joinpath(self.sat_dir, 
@@ -489,7 +508,18 @@ class inspect_sat_masks(WfcWrapper):
         self.trail_diagnostic_path = Path.joinpath(self.sat_dir, 
                                                    self.image_roots[self.image_index] + '_ext{}_mrt'.format(self.ext), 
                                                    self.image_roots[self.image_index] + '_full_ext{}_mrt_{}_diagnostic.png'.format(self.ext, self.trail_id))
- 
+        
+        if check_exists:
+            paths = [self.trail_profile_path, self.trail_diagnostic_path]
+            exists = [path.exists() for path in paths]
+            if np.any(not exists):
+                print('ERROR: The following files are missing:')
+                print(paths[not exists])
+                return 2
+            else:
+                return 0
+        else:
+            return 0
 
     def next_trail(self):
         
@@ -526,7 +556,7 @@ class inspect_sat_masks(WfcWrapper):
             print('catalog length: ',len(self.catalog))
 
         if self.trail_index >= len(self.catalog):
-            print('No more trails on this iamge/extension')
+            print('No more trails on this image/extension')
             if self.ext == 1:
                 self.load_diagnostic()
                 self.menu_type = 'image'
@@ -541,7 +571,12 @@ class inspect_sat_masks(WfcWrapper):
             else:
                 self.trail_id = self.catalog['id'][self.trail_index]
 
-                self.specify_trail_paths()
+                check = self.specify_trail_paths(check_exists=True)
+                if check == 2:
+                    print('Moving to next image')
+                    self.ext = 1
+                    self.next_image(save_status='Missing Files')
+
 
                 self.load_trail_diagnostic()
 
@@ -645,8 +680,12 @@ class inspect_sat_masks(WfcWrapper):
             print(f'Image : {self.current_image}')
             print(f'extension: {self.ext}')
 
-            # specify all the input paths
-            self.specify_image_paths()
+            # specify all the input paths. Run check that needed images exist
+            check = self.specify_image_paths(check_exists=True)
+            if check == 2:
+                print('Moving to next image')
+                self.ext = 1
+                self.next_image(save_status='Error: missing files')
 
             # copy the image diagnostic over to a temp file
             #self.image_diagnostic_path = Path.joinpath(self.sat_dir, self.current_image + '_full_mrt_diagnostic.png'.format(self.ext))

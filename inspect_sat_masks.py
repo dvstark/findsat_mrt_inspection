@@ -155,8 +155,8 @@ class inspect_sat_masks(WfcWrapper):
         self.next_image()
 
         while not self.quit:
-            if len(self.catalog) > 0:
-                print(self.catalog)
+            #if len(self.catalog) > 0:
+            #    print(self.catalog)
             self.menu()
 
     def cycle_through_files(self):
@@ -529,7 +529,7 @@ class inspect_sat_masks(WfcWrapper):
 
             # if moving on from a newly defined trail, need to
             # regenerate plots for all trails to reflect hte new trail
-            print('updating all diagnostic plopts for this image...this may take a moment')
+            print('updating all diagnostic plots for this image...this may take a moment')
             plt.ioff()
             update_diagnostics(str(self.sat_dir), overwrite=True,
                                    image_list = [str(self.image_path)])
@@ -547,13 +547,13 @@ class inspect_sat_masks(WfcWrapper):
 
         else:
 
-            print('\nMoving to the next trail')
+            #print('\nMoving to the next trail')
             plt.close('all')
 
             self.trail_index += 1
 
-            print('extension: ',self.ext)
-            print('catalog length: ',len(self.catalog))
+            #print('extension: ',self.ext)
+            #print('catalog length: ',len(self.catalog))
 
         if self.trail_index >= len(self.catalog):
             print('No more trails on this image/extension')
@@ -678,14 +678,14 @@ class inspect_sat_masks(WfcWrapper):
 
             # tell user what we're looking at
             print(f'Image : {self.current_image}')
-            print(f'extension: {self.ext}')
+            print(f'Checking extension: {self.ext}')
 
             # specify all the input paths. Run check that needed images exist
             check = self.specify_image_paths(check_exists=True)
             if check == 2:
                 print('Moving to next image')
                 self.ext = 1
-                self.next_image(save_status='Error: missing files')
+                self.next_image(save_status='Err/MF')
 
             # copy the image diagnostic over to a temp file
             #self.image_diagnostic_path = Path.joinpath(self.sat_dir, self.current_image + '_full_mrt_diagnostic.png'.format(self.ext))
@@ -1005,8 +1005,10 @@ class inspect_sat_masks(WfcWrapper):
 
         if self.menu_type == 'trail':
             options = trail_options
+            print(self.catalog[self.trail_index])
         elif self.menu_type == 'image':
             options = image_options
+            self.catalog.pprint()
 
         refresh_options = ['w', 'r', 'a']
                    
@@ -1040,7 +1042,7 @@ class inspect_sat_masks(WfcWrapper):
                 # note: menu type has been updated
 
                 if (user_input in refresh_options) & (self.menu_type == 'trail'):
-                    print(self.catalog)
+                    #print(self.catalog)
                     self.regenerate_diagnostics()
 
 

@@ -66,8 +66,8 @@ def make_trail_diagnostic(image_arr,
             trail_cmap = 'bwr_r'
         ax.imshow(np.ma.masked_where(trail_mask == 0, trail_mask)*255, alpha=0.75, origin='lower', aspect='auto', cmap=trail_cmap)
     p3a1.set_title('Image with trail mask')
-    p3a1.text(0.01, 0.98, 'Accepted', color='blue', transform = p3a1.transAxes, fontsize='x-large', va='top',bbox=dict(facecolor='white', alpha=0.5))
-    p3a1.text(0.01, 0.85, 'Rejected', color='red', transform = p3a1.transAxes, fontsize='x-large', va='top',bbox=dict(facecolor='white', alpha=0.5))
+    p3a1.text(0.01, 1.01, 'Accepted', color='blue', transform = p3a1.transAxes, fontsize='x-large', va='bottom',bbox=dict(facecolor='white', alpha=0.5))
+    p3a1.text(0.99, 1.01, 'Rejected', color='red', transform = p3a1.transAxes, fontsize='x-large', va='bottom',ha='right', bbox=dict(facecolor='white', alpha=0.5))
 
 
     # make the big masked image
